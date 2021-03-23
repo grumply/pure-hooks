@@ -1,0 +1,45 @@
+name:                pure-hooks
+version:             0.8.0.0
+homepage:            purehs.org/doc/pure-hooks
+license:             BSD3
+license-file:        LICENSE
+author:              Sean Hickman
+maintainer:          sean@grumply.com
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+
+source-repository head
+  type: git
+  location: https://github.com/grumply/pure-hooks.git
+
+library
+  build-depends:
+    base,
+    containers,
+    stm,
+    ghc-prim,
+    pure-core,
+    pure-time,
+    pure-default
+
+  hs-source-dirs: src
+
+  exposed-modules:
+    Pure.Hooks,
+    Pure.Hooks.Callback,
+    Pure.Hooks.Context,
+    Pure.Hooks.Debounce,
+    Pure.Hooks.Effect,
+    Pure.Hooks.Events,
+    Pure.Hooks.Memo,
+    Pure.Hooks.Reducer,
+    Pure.Hooks.Ref,
+    Pure.Hooks.State,
+    Pure.Hooks.Throttle
+
+  default-extensions:
+    PatternSynonyms
+    MagicHash
+
+  default-language: Haskell2010
