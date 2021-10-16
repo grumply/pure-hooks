@@ -1,5 +1,5 @@
 {-# language TypeApplications, AllowAmbiguousTypes, ScopedTypeVariables #-}
-module Pure.Hooks.Context (useProvider,useContext,provide,cleanup) where
+module Pure.Hooks.Context (useProvider,useContext,useContext',provide,unprovide,cleanup) where
 
 import Pure.Data.Default (def)
 import Pure.Data.View (Comp(..),ask,modify_,get,View)
@@ -84,6 +84,10 @@ cleanup = do
     s <- takeTMVar store
     putTMVar store (Map.delete tr s)
 
+{-# INLINE unprovide #-}
+unprovide :: forall a. Typeable a => IO ()
+unprovide = cleanup @a
+
 {-# INLINE useProvider #-}
 useProvider :: Typeable a => a -> View -> View
 useProvider initial v = flip Component (initial,v) $ \self ->
@@ -97,11 +101,23 @@ useProvider initial v = flip Component (initial,v) $ \self ->
 {-# INLINE useContext #-}
 useContext :: forall a. Typeable a => (a -> View) -> View
 useContext = Component $ \self ->
-  let upd new = modify_ self $ \_ (u,_) -> (u,Just new)
+  let upd new = modify_ self (\_ (u,_) -> (u,Just new))
   in def
       { construct = do
         u <- subscribe upd
         pure (u,Nothing)
       , render = \v (_,ma) -> maybe Null v ma
+      , unmounted = get self >>= \(u,_) -> unsubscribe @a u
+      }
+
+{-# INLINE useContext' #-}
+useContext' :: forall a. Typeable a => (Maybe a -> View) -> View
+useContext' = Component $ \self ->
+  let upd new = modify_ self (\_ (u,_) -> (u,Just new))
+  in def
+      { construct = do
+        u <- subscribe upd
+        pure (u,Nothing)
+      , render = \v (_,ma) -> v ma
       , unmounted = get self >>= \(u,_) -> unsubscribe @a u
       }
