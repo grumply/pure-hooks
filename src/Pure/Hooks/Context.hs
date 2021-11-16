@@ -26,24 +26,24 @@ type Store = TMVar (Map.Map TypeRep Listeners)
 store :: Store
 store = unsafePerformIO (newTMVarIO mempty)
 
-subscribe :: forall a. Typeable a => (a -> IO ()) -> IO Unique
+subscribe :: forall a. Typeable a => (a -> IO ()) -> IO (Unique,Maybe a)
 subscribe f = do
   let 
     g = f . unsafeCoerce
     tr = typeOf (undefined :: a)
   u <- newUnique
-  join $ atomically $ do
+  ma <- join $ atomically $ do
     s <- takeTMVar store
     case Map.lookup tr s of
       Nothing -> do
         let s' = Map.insert tr (Nothing,[(u,g)]) s
         putTMVar store s'
-        pure (pure ())
+        pure (pure Nothing)
       Just (ma,ls) -> do
         let s' = Map.insert tr (ma,(u,g):ls) s
         putTMVar store s'
-        pure (for_ ma g)
-  pure u
+        pure (for_ ma g >> pure (unsafeCoerce ma))
+  pure (u,ma)
 
 unsubscribe :: forall a. Typeable a => Unique -> IO ()
 unsubscribe u = do
@@ -104,8 +104,8 @@ useContext = Component $ \self ->
   let upd new = modify_ self (\_ (u,_) -> (u,Just new))
   in def
       { construct = do
-        u <- subscribe upd
-        pure (u,Nothing)
+        (u,ma) <- subscribe upd
+        pure (u,ma)
       , render = \v (_,ma) -> maybe Null v ma
       , unmounted = get self >>= \(u,_) -> unsubscribe @a u
       }
@@ -116,8 +116,8 @@ useContext' = Component $ \self ->
   let upd new = modify_ self (\_ (u,_) -> (u,Just new))
   in def
       { construct = do
-        u <- subscribe upd
-        pure (u,Nothing)
+        (u,ma) <- subscribe upd
+        pure (u,ma)
       , render = \v (_,ma) -> v ma
       , unmounted = get self >>= \(u,_) -> unsubscribe @a u
       }
