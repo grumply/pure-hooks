@@ -33,6 +33,7 @@ library
     Pure.Hooks.Effect,
     Pure.Hooks.Events,
     Pure.Hooks.Memo,
+    Pure.Hooks.Producer,
     Pure.Hooks.Reducer,
     Pure.Hooks.Ref,
     Pure.Hooks.State,
