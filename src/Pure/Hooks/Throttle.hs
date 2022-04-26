@@ -4,7 +4,7 @@ import Pure.Data.View (View)
 import Pure.Data.Time (time,Time)
 
 import Pure.Hooks.Effect (useEffectWith)
-import Pure.Hooks.Ref (useRef,Ref(..))
+import Pure.Hooks.Ref (ref,deref,assign,Ref)
 
 import Control.Monad (when)
 import Data.Typeable (Typeable)
@@ -16,12 +16,13 @@ useThrottledEffect d f v = useThrottledEffectWith d f () v
 {-# INLINE useThrottledEffectWith #-}
 useThrottledEffectWith :: Typeable a => Time -> IO () -> a -> View -> View
 useThrottledEffectWith d f deps v = 
-  useRef 0 $ \ref ->
-    useEffectWith (effect d f ref) (d,f,deps) v
+  ref (0 :: Time) $
+    useEffectWith (effect d f) (d,f,deps) v
   where 
-    effect interval f (Ref getLastRun setLastRun) = do
-      ran <- getLastRun
+    effect :: Ref Time => Time -> IO () -> IO (IO ())
+    effect interval f = do
+      ran <- deref
       now <- time
       let since = now - ran
-      when (since >= interval) (f >> setLastRun now)
+      when (since >= interval) (f >> assign now)
       pure (pure ())

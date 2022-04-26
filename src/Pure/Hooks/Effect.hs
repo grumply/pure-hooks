@@ -9,6 +9,13 @@ import Data.Typeable (Typeable)
 import Data.IORef (newIORef,readIORef,writeIORef)
 import GHC.Exts (isTrue#,reallyUnsafePtrEquality#)
 
+{-
+
+Unlike most hooks, `effect` cannot be implemented with `Pure.Elm.Fold` because
+only the view of `fold` is dynamic.
+
+-}
+
 {-# INLINE useEffectWith' #-}
 useEffectWith' :: (Eq a, Typeable a) => IO (IO ()) -> a -> View -> View
 useEffectWith' f deps v = flip Component (f,deps,v) $ \self -> 
@@ -50,13 +57,5 @@ useEffectWith f deps v = flip Component (f,deps,v) $ \self ->
       }
 
 {-# INLINE useEffect #-}
-useEffect :: IO () -> View -> View
-useEffect f v = flip Component (f,v) $ \self -> 
-  let eff = ask self >>= \(f,_) -> f
-  in def
-      { construct = pure ()
-      , mounted   = eff
-      , updated   = \_ _ -> eff
-      , unmounted = eff
-      , render    = \(_,v) _ -> v
-      }
+useEffect :: IO (IO ()) -> View -> View
+useEffect f v = useEffectWith f () v

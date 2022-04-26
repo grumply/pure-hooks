@@ -1,4 +1,4 @@
-module Pure.Hooks.Producer (useProducer,useProducerWith,useProducerWith') where
+module Pure.Hooks.Producer {-# DEPRECATED "use Pure.Async or Pure.Elm.Fold" #-} (useProducer,useProducerWith,useProducerWith') where
 
 import Pure.Data.Default (def)
 import Pure.Data.View (Comp(..),ask,get,View,modify_)

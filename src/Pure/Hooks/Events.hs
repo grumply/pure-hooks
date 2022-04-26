@@ -1,5 +1,5 @@
 {-# language TypeApplications, AllowAmbiguousTypes, ScopedTypeVariables #-}
-module Pure.Hooks.Events (useEvents,event) where
+module Pure.Hooks.Events {-# DEPRECATED "use Pure.Elm, Pure.Elm.Sub, or Pure.Elm.Store" #-} (useEvents,event) where
 
 import Pure.Data.Default (def)
 import Pure.Data.View (Comp(..),ask,modifyM_,get,View)

@@ -20,6 +20,7 @@ library
     stm,
     ghc-prim,
     pure-core,
+    pure-elm,
     pure-time,
     pure-default
 
@@ -42,5 +43,11 @@ library
   default-extensions:
     PatternSynonyms
     MagicHash
+    TypeApplications
+    ConstraintKinds
+    FlexibleContexts
+    RankNTypes
+    ScopedTypeVariables
+    AllowAmbiguousTypes
 
   default-language: Haskell2010

@@ -1,25 +1,21 @@
-module Pure.Hooks.Reducer (useReducer,Reducer(..)) where
- 
-import Pure.Data.Default (def)
-import Pure.Data.View (construct,render,modifyM_,View)
-import Pure.Data.View.Patterns (pattern Component)
+module Pure.Hooks.Reducer (reducer,reduced,Reducer) where
+
+import Pure.Elm.Fold
 
 import Data.Typeable (Typeable)
 
-data Reducer cmd a = Reducer 
-  { value :: a
-  , dispatch :: cmd -> IO ()
-  }
+data Command command = Command command
+data Reduced state = Reduced state
 
-{-# INLINE useReducer #-}
-useReducer :: (Typeable cmd,Typeable a) => (cmd -> a -> IO a) -> a -> (Reducer cmd a -> View) -> View
-useReducer reduce initial = Component $ \self ->
-  let 
-    upd cmd = modifyM_ self $ \_ (Reducer x k) -> do
-      x' <- reduce cmd x
-      pure (Reducer x' k,pure ())
-  in 
-    def
-      { construct = pure (Reducer initial upd)
-      , render = ($)
-      }
+type Reducer command state = (Elm (Command command),Has (Reduced state))
+
+reduced :: Has (Reduced state) => state
+reduced = let Reduced state = it in state
+
+reducer :: (Typeable command, Typeable state) => (command -> state -> IO state) -> state -> (Reducer command state => View) -> View
+reducer f initial = foldM update (pure (Reduced initial,pure ()))
+  where
+    update (Command command) (Reduced state) = do
+      new <- f command state
+      pure (Reduced new)
+

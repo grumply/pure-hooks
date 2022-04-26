@@ -1,22 +1,27 @@
-{-# language ScopedTypeVariables #-}
-module Pure.Hooks.State (useState,State(..)) where
+module Pure.Hooks.State (State,state,modify,get,put) where
 
-import Pure.Data.Default (def)
-import Pure.Data.View (construct,render,modify_,View)
-import Pure.Data.View.Patterns (pattern Component)
+import Pure.Elm.Fold hiding (modify,get)
 
-import Data.Typeable (Typeable)
+import Data.Typeable
 
-data State a = State 
-  { state :: a
-  , modify :: (a -> a) -> IO ()
-  }
+{-
+This is a typed wrapper around `fold ($)` with a convenience constraint: `State`.
+-}
 
-{-# INLINE useState #-}
-useState :: forall a. Typeable a => a -> (State a -> View) -> View
-useState initial = Component $ \self ->
-  let upd f = modify_ self $ \_ (~(State x k)) -> State (f x) k
-  in def
-      { construct = pure (State initial upd)
-      , render = ($)
-      }
+data Get a = Get a
+newtype Modify a = Modify (a -> a)
+
+type State a = (Elm (Modify a),Has (Get a))
+
+modify :: Elm (Modify a) => (a -> a) -> IO ()
+modify = command . Modify
+
+put :: Elm (Modify a) => a -> IO ()
+put = modify . const
+
+get :: Has (Get a) => a
+get = let Get a = it in a 
+
+{-# INLINE state #-}
+state :: Typeable a => a -> (State a => View) -> View
+state initial v = fold (\(Modify f) (Get a) -> Get (f a)) (Get initial) v

@@ -1,24 +1,28 @@
-module Pure.Hooks.Ref where
+module Pure.Hooks.Ref (Ref,ref,deref,assign) where
 
-import Pure.Data.Default (def)
-import Pure.Data.View (construct,render,modify_,View)
-import Pure.Data.View.Patterns (pattern Component)
+import Pure.Elm.Fold hiding (Ref)
 
 import Data.Typeable (Typeable)
-import Data.IORef (newIORef,readIORef,writeIORef)
+import Data.IORef (IORef,newIORef,readIORef,writeIORef)
 
-data Ref a = Ref 
-  { deref :: IO a
-  , assign :: a -> IO ()
-  }
+{-
+A wrapper around `foldM writeIORef (newIORef a,pure ())` with a convenience constraint: `Ref`.
+-}
 
-{-# INLINE useRef #-}
-useRef :: Typeable a => a -> (Ref a -> View) -> View
-useRef initial = Component $ \self ->
-  def
-    { construct = do
-      ref <- newIORef initial 
-      pure (Ref (readIORef ref) (writeIORef ref))
-    , render = ($)
-    } 
+newtype Assign a = Assign a
+newtype Reference a = Reference (IORef a)
 
+type Ref a = (Elm (Assign a), Has (Reference a))
+
+deref :: Has (Reference a) => IO a
+deref = let Reference r = it in readIORef r
+
+assign :: Elm (Assign a) => a -> IO ()
+assign = command . Assign
+
+ref :: Typeable a => a -> (Ref a => View) -> View
+ref initial f = foldM (\(Assign a) (Reference r) -> writeIORef r a >> pure (Reference r)) start f
+  where
+    start = do
+      r <- newIORef initial
+      pure (Reference r,pure ())

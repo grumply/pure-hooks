@@ -1,5 +1,4 @@
-{-# language TypeApplications, AllowAmbiguousTypes, ScopedTypeVariables #-}
-module Pure.Hooks.Context (useProvider,useContext,useContext',provide,unprovide,cleanup) where
+module Pure.Hooks.Context {-# DEPRECATED "use Pure.Elm.Store" #-} (useProvider,useContext,useContext',provide,unprovide,cleanup) where
 
 import Pure.Data.Default (def)
 import Pure.Data.View (Comp(..),ask,modify_,get,View)
@@ -16,8 +15,13 @@ import GHC.Exts (Any,isTrue#,reallyUnsafePtrEquality#)
 import System.IO.Unsafe (unsafePerformIO)
 import Unsafe.Coerce (unsafeCoerce)
 
--- Unlike React's Context, this pairing of provide/context is global, not tree-
--- local. To accomplish localization, use newtype wrappers or local coposition.
+
+{-
+
+Typeclass reflection lets us accomplish context injection similar to react's. 
+Use Pure.Elm.Store to accomplish what this module does with a simpler interface.
+
+-}
 
 type Listeners = (Maybe Any,[(Unique,Any -> IO ())])
 type Store = TMVar (Map.Map TypeRep Listeners)
