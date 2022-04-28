@@ -37,7 +37,6 @@ library
     Pure.Hooks.Producer,
     Pure.Hooks.Reducer,
     Pure.Hooks.Ref,
-    Pure.Hooks.State,
     Pure.Hooks.Throttle
 
   default-extensions:
